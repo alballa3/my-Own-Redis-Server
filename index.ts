@@ -3,9 +3,10 @@ import path from "path";
 import fs from "fs";
 interface command {
   name: string;
-  exec: (socket: Socket) => void;
+  exec: (socket: Socket, args?: string[]) => void;
 }
 const commands: command[] = [];
+export const db: Map<string, string> = new Map();
 
 const commandsPath = path.join(process.cwd(), "commands");
 console.log(commandsPath);
@@ -18,19 +19,20 @@ for (const Folder of commandsFolder) {
 
 const server = createServer((socket) => {
   socket.on("data", (data) => {
-    console.log(data.toString());
-    const input = data.toString().trim().toLowerCase();
+    const input = data.toString().trim().split(" ")[0]?.toLowerCase();
     const check = commands.find((command) => command.name === input);
     console.log(check);
     if (check) {
-      check.exec(socket);
+      const args = data.toString().trim().split(" ").slice(1);
+      console.log(args);
+      check.exec(socket, args);
     } else {
       socket.write("-ERR unknown command\r\n");
     }
   });
 });
 
-server.on("connection", (socket) => {
+server.on("connection", () => {
   console.log("client connected");
 });
 
